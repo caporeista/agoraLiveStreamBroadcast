@@ -58,7 +58,7 @@ import {
   createRoomSuccessToastHeading,
   createRoomSuccessToastSubHeading,
 } from '../language/default-labels/createScreenLabels';
-import { set } from 'lodash';
+import { head, set } from 'lodash';
 
 const Create = () => {
   const {CreateComponent} = useCustomization(data => {
@@ -104,19 +104,38 @@ const Create = () => {
   const [status, setStatus] = useState(false);
   const [phrase, setPhrase] = useState('');
   const [urlPost, setUrlPost] = useState(false);
+  const [bareerToken, setBareerToken] = useState("");
+
+
 
   useEffect(() => {
     if (tokenParams) {
-        const url="https://663496039bb0df2359a201ed.mockapi.io/api/login";
-        fetch(url)
+        // tokenParams to base64 decode
+        const base64 = require('base-64');
+        const decoded = base64.decode(tokenParams);
+        const paramss = JSON.parse(decoded);
+        const tokens = paramss.token;
+        const bareerToken = paramss.jwtToken;
+        setBareerToken(bareerToken);
+        
+        // add local storage bareer token
+        localStorage.setItem('bareeerToken', bareerToken);
+        localStorage.setItem('tokens', tokens);   
+        const url="http://localhost:8000/api/live-login/"+tokens;
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+bareerToken,
+        };
+        fetch(url, {headers})
             .then((response) => response.json())
             .then((data) => {
-                const userData = data[0];
+                const userData = data;
                 setStatus(userData.status);
                 setToken(userData.token);
                 setChannel(userData.channel);
                 onChangeRoomTitle(userData.channel);
                 setNameSurname(userData.nameSurname);
+                localStorage.setItem('nameSurname', userData.nameSurname); 
                 setRole(userData.role);
                 setUid(userData.uid);
                     if (userData.role === "publisher") {
@@ -294,12 +313,13 @@ const Create = () => {
 
     if(jsonResponse.data.createChannel.passphrase.view){
       const hostChannel=jsonResponse.data.createChannel.passphrase.host;
-        const setUrl="https://663496039bb0df2359a201ed.mockapi.io/api/post-room";
+        const setUrl="http://localhost:8000/api/live-create-room";
         const method="POST";
         const headers = {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+bareerToken,
         };
-        const body = JSON.stringify({token:tokenParams,viewChannel:jsonResponse.data.createChannel.passphrase.view,hostChannel:jsonResponse.data.createChannel.passphrase.host});
+        const body = JSON.stringify({token:token,viewChannel:jsonResponse.data.createChannel.passphrase.view,hostChannel:jsonResponse.data.createChannel.passphrase.host});
         fetch(setUrl, {method, headers, body})
           .then((response) => response.json())
           .then((data) => {
@@ -315,9 +335,6 @@ const Create = () => {
     return originalFetch(url, options);
   }
 };
-
-
-  
 
   return (
     <CreateProvider

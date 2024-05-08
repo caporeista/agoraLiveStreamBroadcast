@@ -57,9 +57,11 @@ const PreCallProvider = (props: PreCallProviderProps) => {
   const setUsername = useSetName();
 
   useEffect(() => {
+    setUsername(localStorage.getItem('nameSurname')); 
+    //alert(localStorage.getItem('nameSurname'));
     if (join.initialized && join.phrase) {
       if (join.userName) {
-        setUsername(join.userName);
+        setUsername(localStorage.getItem('nameSurname') || join.userName);
       }
 
       //@ts-ignore
@@ -67,7 +69,7 @@ const PreCallProvider = (props: PreCallProviderProps) => {
         roomInfo.data,
         (userName: string) => {
           return new Promise((res, rej) => {
-            setUsername(userName);
+            setUsername(localStorage.getItem('nameSurname'));
             enterRoom.set({res, rej});
             props.value.setCallActive(true);
           });

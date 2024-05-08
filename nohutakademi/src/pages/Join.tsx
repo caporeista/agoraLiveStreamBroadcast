@@ -48,6 +48,7 @@ import {
   joinRoomInputLabel,
   joinRoomInputPlaceHolderText,
 } from '../language/default-labels/joinScreenLabels';
+import { useSearchParams } from 'src/utils/useSearchParams';
 
 const mobileOrTablet = isMobileOrTablet();
 
@@ -99,19 +100,35 @@ const Join = () => {
   const [role, setRole] = useState("");
   const [uid, setUid] = useState(0);
   const [status, setStatus] = useState(false);
+  const [bareerToken, setBareerToken] = useState("");
 
   useEffect(() => {
     if (tokenParams) {
-        const url="https://663496039bb0df2359a201ed.mockapi.io/api/login";
-        fetch(url)
+      // tokenParams to base64 decode
+      const base64 = require('base-64');
+      const decoded = base64.decode(tokenParams);
+      const paramss = JSON.parse(decoded);
+      const tokens = paramss.token;
+      const bareerToken = paramss.jwtToken;
+      // add local storage
+      localStorage.setItem('bareeerToken', bareerToken);
+      localStorage.setItem('tokens', tokens);   
+      setBareerToken(bareerToken);
+        const url="http://localhost:8000/api/live-login-class-control/"+tokens;
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+bareerToken,
+        };
+        fetch(url,{headers})
             .then((response) => response.json())
             .then((data) => {
-                const userData = data[0];
+                const userData = data;
                 setStatus(userData.status);
                 setToken(userData.token);
                 setChannel(userData.channel);
                 setPhrase(userData.channel);
                 setNameSurname(userData.nameSurname);
+                localStorage.setItem('nameSurname', userData.nameSurname); 
                 setRole(userData.role);
                 setUid(userData.uid);
                

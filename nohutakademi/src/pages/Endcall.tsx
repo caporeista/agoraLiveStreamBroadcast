@@ -41,6 +41,7 @@ const Endcall = () => {
     history.push('/');
     StopForegroundService();
   };
+  
   return (
     <View style={styles.main}>
       <View

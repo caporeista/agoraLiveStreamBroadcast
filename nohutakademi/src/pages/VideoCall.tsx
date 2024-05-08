@@ -80,6 +80,7 @@ import {useIsRecordingBot} from '../subComponents/recording/useIsRecordingBot';
 import {videoRoomStartingCallText} from '../language/default-labels/videoCallScreenLabels';
 import {useString} from '../utils/useString';
 import {useCustomization} from 'customization-implementation';
+import { set } from 'lodash';
 
 enum RnEncryptionEnum {
   /**
@@ -381,6 +382,63 @@ const VideoCall: React.FC = () => {
   const [isMicAvailable, setMicAvailable] = useState(false);
   const [isSpeakerAvailable, setSpeakerAvailable] = useState(false);
   const [isPermissionRequested, setIsPermissionRequested] = useState(false);
+  const token = localStorage.getItem('tokens');
+  const bareerToken = localStorage.getItem('bareeerToken');
+  const [status, setStatus] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      const url = `http://localhost:8000/api/live-control/${token}`;
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + bareerToken,
+      };
+      fetch(url, {headers})
+        .then(response => response.json())
+        .then(data => {
+        
+          const userData = data;
+          setStatus(userData.status);
+          if (userData.status === false) {
+            // redirect join page
+            history.push('/create');
+            setUid(0);
+          } else {
+            setUid(1);
+          }
+        });
+    }
+  }, []);
+
+  // dakikada bir kontrol ekle setInterval
+ 
+  setInterval(() => {
+    const url = `http://localhost:8000/api/live-control/${token}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + bareerToken,
+    };
+    fetch(url, {headers})
+      .then(response => response.json())
+      .then(data => {
+        const userData = data;
+        setStatus(userData.status);
+        if (userData.status === false) {
+          // redirect join page
+          history.push('/');
+          setUid(0);
+        } else {
+          setUid(1);
+        }
+      });
+    }, 30000); 
+
+  // eğer bareerToken yoksa ve status false ise
+  if (!bareerToken && status === false
+  ) {
+    history.push('/');
+  }
+
   return (
     <>
       {queryComplete ? (
